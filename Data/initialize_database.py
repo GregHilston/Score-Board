@@ -1,31 +1,10 @@
-import sqlite3, csv, logging
-
-
-# setting up our logger to write to a log file
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG) # Process all levels of logging messages
-
-# create file handler
-file_handler = logging.FileHandler(__name__  + ".log", mode='w')
-file_handler.setLevel(logging.DEBUG)
-
-# create stream handler
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.INFO)
-
-# create formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-stream_handler.setFormatter(formatter)
-
-# add the handlers to the logger
-logger.addHandler(file_handler)
-logger.addHandler(stream_handler)
+import sys, sqlite3, csv, logging
 
 
 class DatabaseInitializer():
-    def __init__(self, database_name):
-        self._sqlite = sqlite3.connect(database_name)
+    def __init__(self, logger, sqlite):
+        self._logger = logger
+        self._sqlite = sqlite
 
 
     def start(self):
@@ -36,15 +15,18 @@ class DatabaseInitializer():
         PLAYERS_TABLE_NAME = "players"
         RECORDS_TABLE_NAME = "records"
 
-        # create our tables
-        self._sqlite.execute("CREATE TABLE {} (name char(100) NOT NULL)".format(GAMES_TABLE_NAME))
-        self._sqlite.execute("CREATE TABLE {} (name char(100) NOT NULL)".format(PLAYERS_TABLE_NAME))
-        self._sqlite.execute("CREATE TABLE {} (date char(100) NOT NULL, game INTEGER NOT NULL, winner INTEGER NOT NULL, loser INTEGER NOT NULL)".format(RECORDS_TABLE_NAME))
-        self._sqlite.commit()
+        try:
+            # create our tables
+            self._sqlite.execute("CREATE TABLE {} (name char(100) UNIQUE NOT NULL)".format(GAMES_TABLE_NAME))
+            self._sqlite.execute("CREATE TABLE {} (name char(100) UNIQUE NOT NULL)".format(PLAYERS_TABLE_NAME))
+            self._sqlite.execute("CREATE TABLE {} (date char(100) NOT NULL, game INTEGER NOT NULL, winner INTEGER NOT NULL, loser INTEGER NOT NULL)".format(RECORDS_TABLE_NAME))
+            self._sqlite.commit()
 
-        # populate our tables
-        self.populate_table(GAMES_TABLE_NAME, "Data/games.csv")
-        self.populate_table(PLAYERS_TABLE_NAME, "Data/players.csv")
+            # populate our tables
+            self.populate_table(GAMES_TABLE_NAME, "Data/games.csv")
+            self.populate_table(PLAYERS_TABLE_NAME, "Data/players.csv")
+        except sqlite3.OperationalError:
+            self._logger.warning("tables already exist, not overwriting them")
 
 
     def populate_table(self, TABLE_NAME, CSV_FILE_NAME):
@@ -52,15 +34,16 @@ class DatabaseInitializer():
         Populates a table with CSV data
         """
 
-        f = open(CSV_FILE_NAME)
-        csv_file = csv.reader(f)
+        with open(CSV_FILE_NAME) as f:
+            csv_file = csv.reader(f)
 
-        logger.debug("Printing {}".format(csv_file))
-        for row in csv_file:
-            val = row[0] # Only using the 0th column
-            logger.debug("\t {} of type {}".format(val, type(val,)))
-            self._sqlite.execute("insert into {} values (?)".format(TABLE_NAME), (val,))
-            self._sqlite.commit()
+            self._logger.debug("Printing {}".format(csv_file))
+            for row in csv_file:
+                val = row[0] # Only using the 0th column
+                self._logger.debug("\t {} of type {}".format(val, type(val,)))
+                self._sqlite.execute("insert into {} values (?)".format(TABLE_NAME), (val,))
+                self._sqlite.commit()
+
 
 def main():
     """
