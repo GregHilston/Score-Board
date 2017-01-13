@@ -23,7 +23,11 @@ class Scoreboard(Bottle):
         Displays DB data and allows users to enter a new win
         """
 
-        return "Hello World!"
+        json_games = self.get_games()
+        # players = self.get_players()
+        # records = self.get_records()
+
+        return template("index", json_games=json_games)
 
 
     def get_games(self):
@@ -34,7 +38,7 @@ class Scoreboard(Bottle):
         self._cur.execute("SELECT * FROM games")
         data = self._cur.fetchall()
 
-        return dumps(data)
+        return dumps(data, sort_keys=True)
 
 
     def get_players(self):
@@ -45,7 +49,7 @@ class Scoreboard(Bottle):
         self._cur.execute("SELECT * FROM players")
         data = self._cur.fetchall()
 
-        return dumps(data)
+        return dumps(data, sort_keys=True)
 
 
     def get_records(self):

@@ -1,10 +1,14 @@
+% import json
+
+
 <p>Games:</p>
 <table border="1">
-%for row in rows:
-  <tr>
-  %for col in row:
-    <td>{{col}}</td>
+% games = json.loads(json_games)
+  %for game in games:
+    % game = str(game).replace("[","")
+    % game = str(game).replace("]","")
+    % game = str(game).replace("'","")
+    <td>{{game}}</td>
   %end
-  </tr>
 %end
 </table>
