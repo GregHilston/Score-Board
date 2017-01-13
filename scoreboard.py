@@ -1,85 +1,83 @@
 import sqlite3
 from json import dumps
-from bottle import route, run, request, template, debug
+from bottle import Bottle, route, error, run, request, template, debug
 
 
-# TODO remove and instead pass in
-DATABASE_NAME = "Data/scoreboard.db"
-sqlite3 = sqlite3.connect(DATABASE_NAME)
-cur = sqlite3.cursor()
+class Scoreboard(Bottle):
+    def __init__(self, logger, sqlite):
+        super(Scoreboard, self).__init__()
+        self._logger = logger
+        self._sqlite = sqlite
+        self._cur = self._sqlite.cursor()
+        self.route("/", callback=self.index)
+        self.route("/get_games", callback=self.get_games)
+        self.route("/get_players", callback=self.get_players)
+        self.route("/get_records", callback=self.get_records)
+        self.route("/add_game", callback=self.add_game)
+        self.route("/add_player", callback=self.add_player)
+        self.route("/add_record", callback=self.add_record)
 
 
-@route("/", method="GET")
-def index():
-    """
-    Displays DB data and allows users to enter a new win
-    """
+    def index(self):
+        """
+        Displays DB data and allows users to enter a new win
+        """
 
-    return "Hello World!"
-
-
-# begin API endpoints
-@route("/get_games", method="GET")
-def get_games():
-    """
-    Returns a JSON list of all games
-    """
-
-    cur.execute("SELECT * FROM games")
-    data = cur.fetchall()
-
-    return dumps(data)
+        return "Hello World!"
 
 
-@route("/get_players", method="GET")
-def get_players():
-    """
-    Returns a JSON list of all players
-    """
+    def get_games(self):
+        """
+        Returns a JSON list of all games
+        """
 
-    cur.execute("SELECT * FROM players")
-    data = cur.fetchall()
+        self._cur.execute("SELECT * FROM games")
+        data = self._cur.fetchall()
 
-    return dumps(data)
-
-
-@route("/get_records", method="GET")
-def get_records(self):
-    """
-    Returns a JSON list of all records
-    """
-
-    cur.execute("SELECT * FROM records")
-    data = cur.fetchall()
-
-    return dumps(data)
+        return dumps(data)
 
 
-@route("/add_game", method="POST")
-def add_game():
-    """
-    Adds a game to the games table
-    """
+    def get_players(self):
+        """
+        Returns a JSON list of all players
+        """
 
-    return "Add game!"
+        self._cur.execute("SELECT * FROM players")
+        data = self._cur.fetchall()
 
-
-@route("/add_player", method="POST")
-def add_player():
-    """
-    Adds a player to the Players table
-    """
-
-    return "Add Player!"
+        return dumps(data)
 
 
-@route("/add_record", method="POST")
-def add_record():
-    """
-    Adds a record to the records table
-    """
+    def get_records(self):
+        """
+        Returns a JSON list of all records
+        """
 
-    return "Add record!"
+        self._cur.execute("SELECT * FROM records")
+        data = self._cur.fetchall()
 
-debug(True)
-run(reloader=True)
+        return dumps(data)
+
+
+    def add_game(self):
+        """
+        Adds a game to the games table
+        """
+
+        return "Add game!"
+
+
+    def add_player(self):
+        """
+        Adds a player to the Players table
+        """
+
+        return "Add Player!"
+
+
+    def add_record(self):
+        """
+        Adds a record to the records table
+        """
+
+        return "Add record!"
