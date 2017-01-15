@@ -1,5 +1,4 @@
-import sqlite3
-from json import dumps
+import json, sqlite3
 from bottle import Bottle, route, error, run, request, template, debug
 
 
@@ -24,10 +23,15 @@ class Scoreboard(Bottle):
         """
 
         json_games = self.get_games()
-        # players = self.get_players()
+        json_players = self.get_players()
+        json_records = self.get_records()
+
         # records = self.get_records()
 
-        return template("index", json_games=json_games)
+        games_table = template("games_or_players", title="Games", values=json.loads(json_games))
+        players_table = template("games_or_players", title="Players", values=json.loads(json_players))
+
+        return games_table + players_table
 
 
     def get_games(self):
@@ -38,7 +42,7 @@ class Scoreboard(Bottle):
         self._cur.execute("SELECT * FROM games")
         data = self._cur.fetchall()
 
-        return dumps(data, sort_keys=True)
+        return json.dumps(data, sort_keys=True)
 
 
     def get_players(self):
@@ -49,7 +53,7 @@ class Scoreboard(Bottle):
         self._cur.execute("SELECT * FROM players")
         data = self._cur.fetchall()
 
-        return dumps(data, sort_keys=True)
+        return json.dumps(data, sort_keys=True)
 
 
     def get_records(self):
@@ -60,7 +64,7 @@ class Scoreboard(Bottle):
         self._cur.execute("SELECT * FROM records")
         data = self._cur.fetchall()
 
-        return dumps(data)
+        return json.dumps(data)
 
 
     def add_game(self):
