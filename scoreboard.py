@@ -94,13 +94,14 @@ class Scoreboard(Bottle):
         loser = request.forms.get("loser")
 
         if winner == loser:
-            print("can't play with yourself")
+            logger.error("Can not play with yourself")
         else:
             print("valid")
             date = datetime.datetime.today().strftime("%m-%d-%Y")
             time = datetime.datetime.today().strftime("%H:%M")
-            self._cur.execute("INSERT into records (date, time, game, winner, loser) VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\")".format(date, time, game, winner, loser))
+            ip = request.environ.get('HTTP_X_FORWARDED_FOR') or request.environ.get('REMOTE_ADDR')
+            self._cur.execute("INSERT into records (date, time, game, winner, loser, ip) VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\")".format(date, time, game, winner, loser, ip))
             self._sqlite.commit()
-            print("inserted record")
+            self._logger.info("{} recorded win against {} in {} at {} {} from {}".format(winner, loser, game, time, date, ip))
 
         return self.index()
