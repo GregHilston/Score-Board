@@ -12,8 +12,8 @@ class Scoreboard(Bottle):
         self.route("/get_games", callback=self.get_games)
         self.route("/get_players", callback=self.get_players)
         self.route("/get_records", callback=self.get_records)
-        self.route("/add_game", callback=self.add_game)
-        self.route("/add_player", callback=self.add_player)
+        self.route("/add_game", method="POST", callback=self.add_game)
+        self.route("/add_player", method="POST", callback=self.add_player)
         self.route("/add_record", method="POST", callback=self.add_record)
 
 
@@ -25,9 +25,6 @@ class Scoreboard(Bottle):
         games = json.loads(self.get_games())
         players = json.loads(self.get_players())
         records = json.loads(self.get_records())
-
-        # records = self.get_records()
-
         games_table = template("games_or_players", title="Games", values=games)
         players_table = template("games_or_players", title="Players", values=players)
         record_game = template("record_game", games=games, players=players)
@@ -73,7 +70,16 @@ class Scoreboard(Bottle):
         Adds a game to the games table
         """
 
-        return "Add game!"
+        name = request.forms.get("name")
+
+        if name is None or name in self.get_games():
+            self._logger.warning("{} is either None or already in our list of games".format(name))
+        else:
+            self._cur.execute("INSERT into games (name) VALUES(\"{}\")".format(name))
+            self._sqlite.commit()
+            self._logger.info("added new game {}".format(name))
+
+        return self.index()
 
 
     def add_player(self):
@@ -81,8 +87,16 @@ class Scoreboard(Bottle):
         Adds a player to the Players table
         """
 
-        return "Add Player!"
+        name = request.forms.get("name")
 
+        if name is None or name in self.get_players():
+            self._logger.warning("{} is either None or already in our list of players".format(name))
+        else:
+            self._cur.execute("INSERT into players (name) VALUES(\"{}\")".format(name))
+            self._sqlite.commit()
+            self._logger.info("added new player {}".format(name))
+
+        return self.index()
 
     def add_record(self):
         """
