@@ -1,4 +1,4 @@
-import json, sqlite3
+import json, sqlite3, datetime
 from bottle import Bottle, route, error, run, request, template, debug
 
 
@@ -95,5 +95,12 @@ class Scoreboard(Bottle):
 
         if winner == loser:
             print("can't play with yourself")
+        else:
+            print("valid")
+            date = datetime.datetime.today().strftime("%m-%d-%Y")
+            time = datetime.datetime.today().strftime("%H:%M")
+            self._cur.execute("INSERT into records (date, time, game, winner, loser) VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\")".format(date, time, game, winner, loser))
+            self._sqlite.commit()
+            print("inserted record")
 
-        return "Add record!"
+        return self.index()
