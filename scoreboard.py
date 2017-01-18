@@ -12,6 +12,7 @@ class Scoreboard(Bottle):
         self.route("/get_games", callback=self.get_games)
         self.route("/get_players", callback=self.get_players)
         self.route("/get_records", callback=self.get_records)
+        self.route("/get_player_records", callback=self.get_player_records)
         self.route("/add_game", method="POST", callback=self.add_game)
         self.route("/add_player", method="POST", callback=self.add_player)
         self.route("/add_record", method="POST", callback=self.add_record)
@@ -25,11 +26,14 @@ class Scoreboard(Bottle):
         games = json.loads(self.get_games())
         players = json.loads(self.get_players())
         records = json.loads(self.get_records())
-        games_table = template("games_or_players", title="Games", values=games)
-        players_table = template("games_or_players", title="Players", values=players)
+
         record_game = template("record_game", games=games, players=players)
 
-        return games_table + players_table + record_game
+        games_table = template("games_or_players", title="Games", values=games)
+        players_table = template("games_or_players", title="Players", values=players)
+        records_table = template("records", title="Records", values=records)
+
+        return record_game + games_table + players_table + records_table
 
 
     def get_games(self):
@@ -37,10 +41,10 @@ class Scoreboard(Bottle):
         Returns a JSON list of all games
         """
 
-        self._cur.execute("SELECT * FROM games")
-        data = self._cur.fetchall()
+        self._cur.execute("SELECT \"name\" FROM games")
+        games = self._cur.fetchall()
 
-        return json.dumps(data, sort_keys=True)
+        return json.dumps(games, sort_keys=True)
 
 
     def get_players(self):
@@ -48,10 +52,10 @@ class Scoreboard(Bottle):
         Returns a JSON list of all players
         """
 
-        self._cur.execute("SELECT * FROM players")
-        data = self._cur.fetchall()
+        self._cur.execute("SELECT \"name\" FROM players")
+        players = self._cur.fetchall()
 
-        return json.dumps(data, sort_keys=True)
+        return json.dumps(players, sort_keys=True)
 
 
     def get_records(self):
@@ -60,9 +64,26 @@ class Scoreboard(Bottle):
         """
 
         self._cur.execute("SELECT * FROM records")
-        data = self._cur.fetchall()
+        records = self._cur.fetchall()
 
-        return json.dumps(data)
+        return json.dumps(records)
+
+
+    def get_player_records(self):
+        """
+        Returns a JSON list of a player's records
+        """
+
+        player_name = request.params["player_name"]
+        player_records = ""
+
+        if player_name is None:
+            self._logger.warning("cannot get records of player_name {}".format(player_name))
+        else:
+            self._cur.execute("SELECT ID FROM players WHERE \"name\" = \"{}\"".format(player_name))
+            player_records = self._cur.fetchall()
+
+        return json.dumps(player_records)
 
 
     def add_game(self):
@@ -70,14 +91,14 @@ class Scoreboard(Bottle):
         Adds a game to the games table
         """
 
-        name = request.forms.get("name")
+        game_name = request.forms.get("game_name")
 
-        if name is None or name in self.get_games():
-            self._logger.warning("{} is either None or already in our list of games".format(name))
+        if game_name is None or game_name in self.get_games():
+            self._logger.warning("{} is either None or already in our list of games".format(game_name))
         else:
-            self._cur.execute("INSERT into games (name) VALUES(\"{}\")".format(name))
+            self._cur.execute("INSERT into games (name) VALUES(\"{}\")".format(game_name))
             self._sqlite.commit()
-            self._logger.info("added new game {}".format(name))
+            self._logger.info("added new game {}".format(game_name))
 
         return self.index()
 
@@ -87,14 +108,14 @@ class Scoreboard(Bottle):
         Adds a player to the Players table
         """
 
-        name = request.forms.get("name")
+        player_name = request.forms.get("player_name")
 
-        if name is None or name in self.get_players():
-            self._logger.warning("{} is either None or already in our list of players".format(name))
+        if player_name is None or player_name in self.get_players():
+            self._logger.warning("{} is either None or already in our list of players".format(player_name))
         else:
-            self._cur.execute("INSERT into players (name) VALUES(\"{}\")".format(name))
+            self._cur.execute("INSERT into players (name) VALUES(\"{}\")".format(player_name))
             self._sqlite.commit()
-            self._logger.info("added new player {}".format(name))
+            self._logger.info("added new player {}".format(player_name))
 
         return self.index()
 
@@ -108,7 +129,7 @@ class Scoreboard(Bottle):
         loser = request.forms.get("loser")
 
         if winner == loser:
-            logger.error("Can not play with yourself")
+            self._logger.error("Can not play with yourself")
         else:
             print("valid")
             date = datetime.datetime.today().strftime("%m-%d-%Y")

@@ -17,8 +17,8 @@ class DatabaseInitializer():
 
         try:
             # create our tables
-            self._sqlite.execute("CREATE TABLE {} (name char(100) UNIQUE NOT NULL)".format(GAMES_TABLE_NAME))
-            self._sqlite.execute("CREATE TABLE {} (name char(100) UNIQUE NOT NULL)".format(PLAYERS_TABLE_NAME))
+            self._sqlite.execute("CREATE TABLE {} (id INTEGER PRIMARY KEY AUTOINCREMENT, name char(100) UNIQUE NOT NULL)".format(GAMES_TABLE_NAME))
+            self._sqlite.execute("CREATE TABLE {} (id INTEGER PRIMARY KEY AUTOINCREMENT, name char(100) UNIQUE NOT NULL)".format(PLAYERS_TABLE_NAME))
             self._sqlite.execute("CREATE TABLE {} (date char(100) NOT NULL, time char(100) NOT NULL, game INTEGER NOT NULL, winner INTEGER NOT NULL, loser INTEGER NOT NULL, ip char(100) NOT NULL)".format(RECORDS_TABLE_NAME))
             self._sqlite.commit()
 
