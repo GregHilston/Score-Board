@@ -76,12 +76,18 @@ class Scoreboard(Bottle):
 
         player_name = request.params["player_name"]
         player_records = ""
+        print("player_name {}".format(player_name))
 
         if player_name is None:
             self._logger.warning("cannot get records of player_name {}".format(player_name))
         else:
             self._cur.execute("SELECT ID FROM players WHERE \"name\" = \"{}\"".format(player_name))
+            player_id = self._cur.fetchall()[0][0] # Unpack list of tuples of size 1
+            print("id {} of type {}".format(player_id, type(player_id)))
+
+            self._cur.execute("SELECT * FROM records WHERE \"winner\" = \"{}\"".format(player_id))
             player_records = self._cur.fetchall()
+            print("player_records {}".format(player_records))
 
         return json.dumps(player_records)
 

@@ -43,7 +43,7 @@ class DatabaseInitializer():
             for row in csv_file:
                 val = row[0] # Only using the 0th column
                 self._logger.debug("\t {} of type {}".format(val, type(val,)))
-                self._sqlite.execute("insert into {} values (?)".format(TABLE_NAME), (val,))
+                self._sqlite.execute("INSERT into {} (name) VALUES (?)".format(TABLE_NAME), (val,))
                 self._sqlite.commit()
 
 
