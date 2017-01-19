@@ -66,7 +66,18 @@ class Scoreboard(Bottle):
         self._cur.execute("SELECT * FROM records")
         records = self._cur.fetchall()
 
-        return json.dumps(records)
+
+        # get the names of our columns
+        cursor = self._sqlite.execute("SELECT * from records")
+        names = list(map(lambda x: x[0], cursor.description))
+
+        record_dicts = []
+
+        for record in records:
+            record_dict = dict(zip(names, record))
+            record_dicts.append(record_dict)
+
+        return json.dumps(record_dicts)
 
 
     def get_player_records(self):
