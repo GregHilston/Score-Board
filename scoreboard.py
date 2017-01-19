@@ -85,11 +85,25 @@ class Scoreboard(Bottle):
             player_id = self._cur.fetchall()[0][0] # Unpack list of tuples of size 1
             print("id {} of type {}".format(player_id, type(player_id)))
 
+            # get our player's records in an array of arrays
             self._cur.execute("SELECT * FROM records WHERE \"winner\" = \"{}\"".format(player_id))
             player_records = self._cur.fetchall()
-            print("player_records {}".format(player_records))
 
-        return json.dumps(player_records)
+            # get the names of our columns
+            cursor = self._sqlite.execute("SELECT * from records")
+            names = list(map(lambda x: x[0], cursor.description))
+
+            # format our records as a dictionary
+            record_dicts = []
+
+            for record in player_records:
+                record_dict = dict(zip(names, record))
+                record_dicts.append(record_dict)
+                self._logger.info("record_dict {}".format(record_dict))
+
+            self._logger.info("record_dicts {}".format(record_dicts))
+
+        return json.dumps(record_dicts)
 
 
     def add_game(self):
