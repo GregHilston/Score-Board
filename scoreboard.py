@@ -12,10 +12,10 @@ class Scoreboard(Bottle):
         self.route("/games", callback=self.games)
         self.route("/players", callback=self.players)
         self.route("/records", callback=self.records)
-        self.route("/player_records", callback=self.player_records)
+        self.route("/player_wins", callback=self.player_wins)
         self.route("/game", method="POST", callback=self.game)
-        self.route("/add_player", method="POST", callback=self.player)
-        self.route("/add_record", method="POST", callback=self.record)
+        self.route("/player", method="POST", callback=self.player)
+        self.route("/record", method="POST", callback=self.record)
 
 
     def index(self):
@@ -36,6 +36,28 @@ class Scoreboard(Bottle):
         data = self.populate_score_data_structure(data, records)
 
         return record_game + games_table + players_table
+
+
+    def game_id_to_game_name(self, game_id):
+        """
+        Converts a game id to a game name
+        """
+
+        self._cur.execute(f"SELECT \"name\" FROM games WHERE \"id\" = {game_id}")
+        game_id = self._cur.fetchall()
+
+        return game_id[0][0]
+
+
+    def player_id_to_player_name(self, player_id):
+        """
+        Converts a player id to a player name
+        """
+
+        self._cur.execute(f"SELECT \"name\" FROM players WHERE \"id\" = {player_id}")
+        player_name = self._cur.fetchall()
+
+        return player_name[0][0]
 
 
     def create_score_data_structure(self, players, games):
@@ -108,7 +130,6 @@ class Scoreboard(Bottle):
         self._cur.execute("SELECT * FROM records")
         records = self._cur.fetchall()
 
-
         # get the names of our columns
         cursor = self._sqlite.execute("SELECT * from records")
         names = list(map(lambda x: x[0], cursor.description))
@@ -121,40 +142,39 @@ class Scoreboard(Bottle):
 
         return json.dumps(record_dicts)
 
-    def player_records(self):
+
+    def player_wins(self):
         """
-        Returns a JSON list of a player's records
+        Returns a JSON array of players and the number of wins they have against opponents for each game
         """
 
-        player_name = request.params["player_name"]
-        player_records = ""
-        print("player_name {}".format(player_name))
+        win_dicts = []
 
-        if player_name is None:
-            self._logger.warning("cannot get records of player_name {}".format(player_name))
-        else:
-            # get our player's id
-            self._cur.execute("SELECT ID FROM players WHERE \"name\" = \"{}\"".format(player_name))
-            player_id = self._cur.fetchall()[0][0] # Unpack list of tuples of size 1
+        self._cur.execute("SELECT * FROM records")
+        records = self._cur.fetchall()
 
-            # get our player's records in an array of arrays
-            self._cur.execute("SELECT * FROM records WHERE \"winner\" = \"{}\"".format(player_id))
-            player_records = self._cur.fetchall()
+        # get the names of our columns
+        cursor = self._sqlite.execute("SELECT * from records")
+        names = list(map(lambda x: x[0], cursor.description))
 
-            # create a dictionary of all this player's records
+        record_dicts = []
 
-            # get the names of our columns
-            cursor = self._sqlite.execute("SELECT * from records")
-            names = list(map(lambda x: x[0], cursor.description))
+        for record in records:
+            record_dict = dict(zip(names, record))
+            record_dicts.append(record_dict)
 
-            # format our records as a dictionary
-            record_dicts = []
+        print(f"record_dicts type {str(type(record_dicts))}")
 
-            for record in player_records:
-                record_dict = dict(zip(names, record))
-                record_dicts.append(record_dict)
+        for this_dict in record_dicts:
+            game = this_dict["game"]
+            winner = this_dict["winner"]
+            loser = this_dict["loser"]
 
-        return json.dumps(record_dicts)
+            print(f"game {game} {self.game_id_to_game_name(game)}")
+            print(f"winner {winner} {self.player_id_to_player_name(winner)}")
+            print(f"loser {loser} {self.player_id_to_player_name(loser)}")
+
+        return json.dumps(win_dicts)
 
 
     def game(self):
@@ -189,6 +209,7 @@ class Scoreboard(Bottle):
             self._logger.info("added new player {}".format(player_name))
 
         return self.index()
+
 
     def record(self):
         """
