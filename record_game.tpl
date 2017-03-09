@@ -6,7 +6,7 @@
   <body>
     <div class="container">
       <h2>Record a Win</h2>
-        <form action="/add_record" method="post">
+        <form action="/record" method="post">
           Game
           <select name="game">
               %for game in games:

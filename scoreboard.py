@@ -33,7 +33,7 @@ class Scoreboard(Bottle):
         games_table = template("games_or_players", title="Games", values=games)
         players_table = template("games_or_players", title="Players", values=players)
 
-        wins_table = template("game_wins", title="Pool", values=wins)
+        wins_table = template("game_wins", values=wins)
 
         data = self.create_score_data_structure(players, games)
         data = self.populate_score_data_structure(data, records)
@@ -51,6 +51,16 @@ class Scoreboard(Bottle):
 
         return game_id[0][0]
 
+    def game_name_to_game_id(self, game_name):
+        """
+        Converts a game name to a game id
+        """
+
+        self._cur.execute(f"SELECT \"id\" FROM games WHERE \"name\" = \"{game_name}\"")
+        game_name = self._cur.fetchall()
+
+        return game_name[0][0]
+
 
     def player_id_to_player_name(self, player_id):
         """
@@ -58,6 +68,18 @@ class Scoreboard(Bottle):
         """
 
         self._cur.execute(f"SELECT \"name\" FROM players WHERE \"id\" = {player_id}")
+        player_name = self._cur.fetchall()
+
+        return player_name[0][0]
+
+
+    def player_name_to_player_id(self, player_name):
+        """
+        Converts a player name to a player id
+        """
+        
+        self._logger.debug(f"SELECT \"id\" FROM players WHERE \"name\" = \"{player_name}\"")        
+        self._cur.execute(f"SELECT \"id\" FROM players WHERE \"name\" = \"{player_name}\"")
         player_name = self._cur.fetchall()
 
         return player_name[0][0]
@@ -71,7 +93,7 @@ class Scoreboard(Bottle):
         data = {}
 
         for winner in players:
-            self._logger.debug("winner {} of type {}".format(winner, type(winner)))
+            self._logger.debug(f"winner {winner} of type {str(type(winner))}")
             data[str(winner)] = {}
 
             for loser in players:
@@ -79,10 +101,10 @@ class Scoreboard(Bottle):
                     data[str(winner)][str(loser)] = {}
 
                     for game in games:
-                        self._logger.debug("game {} of type {}".format(game, type(game)))
+                        self._logger.debug(f"game {game} of type {str(type(game))}")
                         data[str(winner)][str(loser)][str(game)] = 0
 
-        self._logger.debug("data without records {} of type {}".format(data, type(data)))
+        self._logger.debug(f"data without records {data} of type {str(type(data))}")
         return data
 
 
@@ -99,7 +121,7 @@ class Scoreboard(Bottle):
                 # self._logger.debug(f"val {val} of type {str(type(val))}")
 
 
-        self._logger.debug("data with records {}".format(data))
+        self._logger.debug(f"data with records {data}")
         return data
 
 
@@ -191,11 +213,11 @@ class Scoreboard(Bottle):
         game_name = request.forms.get("game_name")
 
         if game_name is None or game_name in self.games():
-            self._logger.warning("{} is either None or already in our list of games".format(game_name))
+            self._logger.warning(f"{game_name} is either None or already in our list of games")
         else:
-            self._cur.execute("INSERT into games (name) VALUES(\"{}\")".format(game_name))
+            self._cur.execute(f"INSERT into games (name) VALUES(\"{game_name}\")")
             self._sqlite.commit()
-            self._logger.info("added new game {}".format(game_name))
+            self._logger.info(f"added new game {game_name}")
 
         return self.index()
 
@@ -208,11 +230,11 @@ class Scoreboard(Bottle):
         player_name = request.forms.get("player_name")
 
         if player_name is None or player_name in self.players():
-            self._logger.warning("{} is either None or already in our list of players".format(player_name))
+            self._logger.warning(f"{player_name} is either None or already in our list of players")
         else:
-            self._cur.execute("INSERT into players (name) VALUES(\"{}\")".format(player_name))
+            self._cur.execute(f"INSERT into players (name) VALUES(\"{player_name}\")")
             self._sqlite.commit()
-            self._logger.info("added new player {}".format(player_name))
+            self._logger.info(f"added new player player_name \"{player_name}\"")
 
         return self.index()
 
@@ -222,19 +244,25 @@ class Scoreboard(Bottle):
         Adds a record to the records table
         """
 
-        game = request.forms.get("game")
-        winner = request.forms.get("winner")
-        loser = request.forms.get("loser")
+        game_name = request.forms.get("game")
+        self._logger.debug(f"game_name \"{game_name}\"")
+        game_id = self.game_name_to_game_id(game_name)
+        winner_name = request.forms.get("winner")
+        self._logger.debug(f"winner_name \"{winner_name}\"")
+        winner_id = self.player_name_to_player_id(winner_name)
+        loser_name = request.forms.get("loser")
+        self._logger.debug(f"loser_name \"{loser_name}\"")
+        loser_id = self.player_name_to_player_id(loser_name)
 
-        if winner == loser:
+        if winner_id == loser_id:
             self._logger.error("Can not play with yourself")
         else:
-            print("valid")
+            self._logger.debug("valid")
             date = datetime.datetime.today().strftime("%m-%d-%Y")
             time = datetime.datetime.today().strftime("%H:%M")
             ip = request.environ.get('HTTP_X_FORWARDED_FOR') or request.environ.get('REMOTE_ADDR')
-            self._cur.execute("INSERT into records (date, time, game, winner, loser, ip) VALUES(\"{}\", \"{}\", \"{}\", \"{}\", \"{}\", \"{}\")".format(date, time, game, winner, loser, ip))
+            self._cur.execute(f"INSERT into records (date, time, game, winner, loser, ip) VALUES(\"{date}\", \"{time}\", \"{game_id}\", \"{winner_id}\", \"{loser_id}\", \"{ip}\")")
             self._sqlite.commit()
-            self._logger.info("{} recorded win against {} in {} at {} {} from {}".format(winner, loser, game, time, date, ip))
+            self._logger.info(f"{winner_id} recorded win against {loser_id} in {game_id} at {time} {date} from {ip}")
 
         return self.index()
