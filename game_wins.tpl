@@ -10,13 +10,29 @@
 
 			<div class="table-responsive">
 				<table class="table border="1">
-			  		% # get our JSON objects out of the list
-			  		% for game, winner_dict in values.items():
-			  			% for winner, loser_dict in winner_dict.items():
-			  				% for loser, win in loser_dict.items():
-			  					<td>{{game}} {{winner}} {{loser}} {{win}}</td>
+					<thead>
+						<tr>
+							<th>Game</th>
+							<th>Winner</th>
+							<th>Loser</th>
+							<th>Wins</th>
+						</tr>
+					</thead>
+
+					<tbody>
+				  		% # get our JSON objects out of the list
+				  		% for game, winner_dict in values.items():
+				  			% for winner, loser_dict in winner_dict.items():
+				  				% for loser, win in loser_dict.items():
+				  					<tr>
+				  						<td>{{game}}</td>
+				  						<td>{{winner}}</td>
+				  						<td>{{loser}}</td>
+				  						<td>{{win}}</td>
+				  					</tr>
+							%end
 						%end
-					%end
+					</tbody>
 				</table>
 			</div>
 		</div>
