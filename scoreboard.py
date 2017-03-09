@@ -148,7 +148,7 @@ class Scoreboard(Bottle):
         Returns a JSON array of players and the number of wins they have against opponents for each game
         """
 
-        win_dicts = []
+        win_dicts = {}
 
         self._cur.execute("SELECT * FROM records")
         records = self._cur.fetchall()
@@ -163,16 +163,19 @@ class Scoreboard(Bottle):
             record_dict = dict(zip(names, record))
             record_dicts.append(record_dict)
 
-        print(f"record_dicts type {str(type(record_dicts))}")
-
         for this_dict in record_dicts:
-            game = this_dict["game"]
-            winner = this_dict["winner"]
-            loser = this_dict["loser"]
+            game = self.game_id_to_game_name(this_dict["game"])
+            winner = self.player_id_to_player_name(this_dict["winner"])
+            loser = self.player_id_to_player_name(this_dict["loser"])
 
-            print(f"game {game} {self.game_id_to_game_name(game)}")
-            print(f"winner {winner} {self.player_id_to_player_name(winner)}")
-            print(f"loser {loser} {self.player_id_to_player_name(loser)}")
+            if game not in win_dicts:
+                win_dicts[game] = {}
+            if winner not in win_dicts[game]:
+                win_dicts[game][winner] = {}
+            if loser not in win_dicts[game][winner]:
+                win_dicts[game][winner][loser] = 1
+            else:
+                win_dicts[game][winner][loser] += 1
 
         return json.dumps(win_dicts)
 
