@@ -27,6 +27,8 @@ class Scoreboard(Bottle):
         players = json.loads(self.players())
         records = json.loads(self.records())
         wins = json.loads(self.player_wins())
+ 
+        head = template("head")
 
         record_game = template("record_game", games=games, players=players)
 
@@ -35,10 +37,12 @@ class Scoreboard(Bottle):
 
         wins_table = template("game_wins", values=wins)
 
+        tail = template("tail")
+
         data = self.create_score_data_structure(players, games)
         data = self.populate_score_data_structure(data, records)
 
-        return record_game + games_table + players_table + wins_table
+        return head  + games_table + players_table + wins_table + record_game + tail
 
 
     def game_id_to_game_name(self, game_id):
