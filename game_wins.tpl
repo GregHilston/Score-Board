@@ -22,10 +22,12 @@
 						<tbody>
 				  			% for winner, loser_dict in winner_dict.items():
 				  				% for loser, win in loser_dict.items():
+
 				  					<tr>
 				  						<td>{{winner}}</td>
 				  						<td>{{loser}}</td>
-				  						<td>{{win}}</td>
+				  						% print(f"win {win}")
+				  						<td class="reloadable">{{win}}</td>
 				  					</tr>
 				  				% end
 							% end

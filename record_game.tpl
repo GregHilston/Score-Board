@@ -51,6 +51,7 @@
             success: function(data) {
               $("#message").hide();
               $("#response").html(data);
+              $('.reloadable').load(document.URL +  ' .reloadable');
             }
           });
         });
