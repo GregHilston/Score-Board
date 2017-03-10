@@ -6,7 +6,7 @@
 
 	<body>
 		% for game, winner_dict in values.items():
-		    <div class="container">
+		    <div class="container reloadable">
 				<h3>{{game}}</h3>
 
 				<div class="table-responsive">
@@ -27,7 +27,7 @@
 				  						<td>{{winner}}</td>
 				  						<td>{{loser}}</td>
 				  						% print(f"win {win}")
-				  						<td class="reloadable">{{win}}</td>
+				  						<td>{{win}}</td>
 				  					</tr>
 				  				% end
 							% end
