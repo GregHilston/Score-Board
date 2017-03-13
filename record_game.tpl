@@ -2,7 +2,7 @@
   <h2>Record a Win</h2>
     <form action="/record" method="post" id="recordForm">
       Game
-      <select name="game">
+      <select name="game" id="game">
           %for game in games:
           % game = game[0] # get our JSON object out of the list
           <option value="{{game}}">{{game}}</option>
@@ -35,17 +35,25 @@
   $(function() {
     $("#recordForm").on("submit", function(e) {
       e.preventDefault();
+      var selectedGame = $('#game').find(":selected").text();
       $.ajax({
         url: $(this).attr("action"),
         type: 'POST',
         data: $(this).serialize(),
         beforeSend: function() {
+          console.log(selectedGame)
+          console.log("Sending record for " + selectedGame +" ...")
           $("#message").html("sending...");
         },
         success: function(data) {
+          console.log("Record successfully sent")
           $("#message").hide();
           $("#response").html(data);
-          $('.reloadable').load(document.URL +  ' .reloadable');
+
+          var wrapper = $('.reloadable-' + selectedGame);
+          wrapper.load('#response .reloadable-' + selectedGame, function() {
+             wrapper.children('.reloadable-' + selectedGame).unwrap();
+          });
         }
       });
     });
